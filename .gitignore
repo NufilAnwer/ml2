@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment variables - NEVER commit these
+.env
+*.env
+!.env.example
+
+# Data (tracked by DVC)
+data/
+*.dvc/cache
+
+# Models (large files)
+models/*.h5
+models/*.keras
+models/*.pb
+models/*.pt
+!models/.gitkeep
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+app/uploads/
+
+# Keras Tuner
+kt_tuner_dir/
+

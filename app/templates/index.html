@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}VisionGuard – Upload Image{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+    <h1 class="hero-title">Is it <span class="highlight-ai">AI-Generated</span> or <span class="highlight-real">Real</span>?</h1>
+    <p class="hero-subtitle">Upload any image and VisionGuard's deep learning model will classify it instantly.</p>
+</div>
+
+<div class="upload-card">
+    <form id="upload-form" action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data">
+        <!-- Drop zone -->
+        <div class="drop-zone" id="drop-zone">
+            <div class="drop-zone-inner">
+                <div class="upload-icon">📁</div>
+                <p class="drop-text">Drag &amp; drop an image here</p>
+                <p class="drop-or">or</p>
+                <label for="file-input" class="btn btn-primary">Choose File</label>
+                <input type="file" id="file-input" name="file" accept=".jpg,.jpeg,.png,.bmp,.webp,.gif" hidden required>
+            </div>
+            <div class="file-preview" id="file-preview" style="display:none;">
+                <img id="preview-img" src="" alt="Preview" class="preview-image">
+                <div class="file-info" id="file-info"></div>
+            </div>
+        </div>
+
+        <!-- File constraints notice -->
+        <p class="constraints-notice">
+            Accepted: JPG, JPEG, PNG, BMP, WEBP, GIF &nbsp;|&nbsp; Max size: 10 MB
+        </p>
+
+        <button type="submit" class="btn btn-submit" id="submit-btn" disabled>
+            <span class="btn-text">🔍 Analyze Image</span>
+            <span class="btn-spinner" style="display:none;">⏳ Analyzing…</span>
+        </button>
+    </form>
+</div>
+
+<!-- How it works -->
+<div class="info-cards">
+    <div class="info-card">
+        <div class="info-icon">🤖</div>
+        <h3>AI-Generated</h3>
+        <p>Images produced by generative AI models (Midjourney, DALL·E, Stable Diffusion, etc.)</p>
+    </div>
+    <div class="info-card">
+        <div class="info-icon">📷</div>
+        <h3>Real</h3>
+        <p>Photographs taken by cameras or scraped from the real web — genuine images.</p>
+    </div>
+    <div class="info-card">
+        <div class="info-icon">🧠</div>
+        <h3>How it works</h3>
+        <p>MobileNetV2 fine-tuned on thousands of AI and real images, achieving &gt;90% accuracy.</p>
+    </div>
+</div>
+{% endblock %}
+

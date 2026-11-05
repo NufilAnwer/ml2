@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}VisionGuard – Result{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <h2 class="result-heading">Analysis Complete</h2>
+
+    {% if error %}
+    <div class="result-card result-error">
+        <div class="verdict-icon">⚠️</div>
+        <h3 class="verdict-label">Error</h3>
+        <p class="error-message">{{ error }}</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Try Again</a>
+    </div>
+    {% elif result %}
+    <div class="result-card {% if result.label == 'AI-Generated' %}result-ai{% else %}result-real{% endif %}">
+        <!-- Verdict -->
+        <div class="verdict-icon">
+            {% if result.label == 'AI-Generated' %}🤖{% else %}📷{% endif %}
+        </div>
+        <h3 class="verdict-label
+            {% if result.label == 'AI-Generated' %}label-ai{% else %}label-real{% endif %}">
+            {{ result.label }}
+        </h3>
+
+        <!-- Confidence bar -->
+        <div class="confidence-section">
+            <p class="confidence-text">Confidence: <strong>{{ (result.confidence * 100) | round(1) }}%</strong></p>
+            <div class="confidence-bar-bg">
+                <div class="confidence-bar-fill
+                    {% if result.label == 'AI-Generated' %}bar-ai{% else %}bar-real{% endif %}"
+                    style="width: {{ (result.confidence * 100) | round(1) }}%">
+                </div>
+            </div>
+        </div>
+
+        <!-- Details table -->
+        <div class="details-table">
+            <div class="detail-row">
+                <span class="detail-key">Filename</span>
+                <span class="detail-val">{{ filename }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key">Raw Score</span>
+                <span class="detail-val">{{ result.raw_score }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key">Decision Threshold</span>
+                <span class="detail-val">{{ result.threshold }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key">Model</span>
+                <span class="detail-val">{{ result.model_path | truncate(60) }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key">Timestamp</span>
+                <span class="detail-val">{{ timestamp }}</span>
+            </div>
+            {% if record_id %}
+            <div class="detail-row">
+                <span class="detail-key">Log ID</span>
+                <span class="detail-val">#{{ record_id }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Caveat -->
+        <div class="caveat-box">
+            ⚠️ <strong>Honest Caveat:</strong> AI detection is an imperfect science.
+            Heavily compressed, filtered, or edited images may fool the model.
+            Always use human judgment for critical decisions.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">🔍 Analyze Another</a>
+        <a href="{{ url_for('history') }}" class="btn btn-secondary">📋 View History</a>
+    </div>
+</div>
+{% endblock %}
+

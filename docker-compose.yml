@@ -1,0 +1,67 @@
+# Task 6.3 - Docker Compose Stack
+# Multi-container orchestration:
+# 1. db: PostgreSQL 16 (isolated network, named volume persistence, health check)
+# 2. web: VisionGuard Flask application (waits for db readiness, non-root execution)
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: visionguard-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-visionguard}
+      POSTGRES_USER: ${POSTGRES_USER:-visionguard_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-visionguard_secure_pass_2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-visionguard_user} -d ${POSTGRES_DB:-visionguard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - visionguard_net
+    # Port 5432 is deliberately NOT exposed to host to keep DB secure
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: visionguard-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_ENV: production
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-visionguard_secret_prod_key_7796e}
+      DEBUG: "False"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-visionguard_user}:${POSTGRES_PASSWORD:-visionguard_secure_pass_2026}@db:5432/${POSTGRES_DB:-visionguard}
+      MODEL_PATH: /app/models/champion_model.keras
+      DECISION_THRESHOLD: ${DECISION_THRESHOLD:-0.279}
+      MAX_CONTENT_LENGTH: 10485760
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount models folder read-only so updated models can be injected without image rebuild
+      - ./models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - visionguard_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  visionguard_net:
+    driver: bridge

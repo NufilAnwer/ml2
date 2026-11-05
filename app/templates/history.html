@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}VisionGuard – History{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <div class="history-header">
+        <h2>Prediction History</h2>
+        <p class="history-meta">Total records: <strong>{{ total }}</strong></p>
+    </div>
+
+    {% if records %}
+    <div class="table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Filename</th>
+                    <th>Verdict</th>
+                    <th>Confidence</th>
+                    <th>Raw Score</th>
+                    <th>Threshold</th>
+                    <th>Model</th>
+                    <th>IP</th>
+                    <th>Timestamp (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr class="{% if r.label == 'AI-Generated' %}row-ai{% elif r.label == 'Real' %}row-real{% else %}row-error{% endif %}">
+                    <td>{{ r.id }}</td>
+                    <td class="filename-cell" title="{{ r.filename }}">{{ r.filename | truncate(30) }}</td>
+                    <td>
+                        <span class="badge {% if r.label == 'AI-Generated' %}badge-ai{% elif r.label == 'Real' %}badge-real{% else %}badge-error{% endif %}">
+                            {% if r.label == 'AI-Generated' %}🤖{% elif r.label == 'Real' %}📷{% else %}⚠️{% endif %}
+                            {{ r.label }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="mini-bar-bg">
+                            <div class="mini-bar-fill {% if r.label == 'AI-Generated' %}bar-ai{% else %}bar-real{% endif %}"
+                                style="width:{{ (r.confidence * 100) | round }}%"></div>
+                        </div>
+                        {{ (r.confidence * 100) | round(1) }}%
+                    </td>
+                    <td>{{ r.raw_score }}</td>
+                    <td>{{ r.threshold }}</td>
+                    <td class="model-cell" title="{{ r.model_path }}">{{ r.model_path | truncate(25) if r.model_path else '—' }}</td>
+                    <td>{{ r.client_ip or '—' }}</td>
+                    <td class="ts-cell">{{ r.created_at | replace('T', ' ') | truncate(19, True, '') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="{{ url_for('history', page=page-1) }}" class="page-btn">← Prev</a>
+        {% endif %}
+        <span class="page-info">Page {{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+            <a href="{{ url_for('history', page=page+1) }}" class="page-btn">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No predictions yet. <a href="{{ url_for('index') }}">Upload your first image!</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

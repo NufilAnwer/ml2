@@ -1,0 +1,35 @@
+# Git, virtual environments, and caches
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Raw and processed datasets (handled via DVC)
+data/
+data/raw/
+data/processed/
+
+# MLflow and tuning artifacts
+mlruns/
+.dvc/
+kt_tuner_dir/
+kt_toy_fashion/
+kt_visionguard/
+
+# Environment files
+.env
+*.env
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation and tests
+notebooks/
+tests/
+README.md
+docs/
