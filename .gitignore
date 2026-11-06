@@ -1,37 +1,31 @@
-# Python
-venv/
-.venv/
 __pycache__/
 *.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
 .pytest_cache/
+.ruff_cache/
 .mypy_cache/
-
-# DVC local cache and credentials
+.DS_Store
+.idea/
+.vscode/
+.kaggle/
+*.log
+mlruns/
+mlartifacts/
 .dvc/cache/
 .dvc/tmp/
 .dvc/config.local
-.dvc/config.user
-*.token
-credentials.json
-client_secrets.json
-token.json
-
-# Generated ML artifacts (track with DVC)
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
-models/*
-!models/.gitkeep
-*.h5
-
-# Reports / local outputs
+data/dataset/
+data/splits/
+data/audit/
+data/eda/
+models/*.keras
+models/*.h5
+models/*.weights.h5
+models/checkpoints/
+reports/evidence/
 reports/*.pdf
-*.png
-metrics.json
-
-# Editors and OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+uploads/
