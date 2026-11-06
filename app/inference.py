@@ -52,12 +52,12 @@ def _load_model():
 
 def preprocess_image(image_bytes: bytes) -> np.ndarray:
     """
-    Convert raw bytes → (1, 224, 224, 3) float32 tensor [0, 1].
+    Convert raw bytes → (1, 224, 224, 3) float32 tensor [0, 255].
     Resize via PIL LANCZOS for high quality.
     """
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     img = img.resize(IMG_SIZE, Image.LANCZOS)
-    arr = np.array(img, dtype=np.float32) / 255.0
+    arr = np.array(img, dtype=np.float32)
     return np.expand_dims(arr, axis=0)
 
 

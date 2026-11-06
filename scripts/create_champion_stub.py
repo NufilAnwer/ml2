@@ -11,9 +11,10 @@ def build_and_save_champion():
     print("Building MobileNetV2 champion model stub...")
     inputs = tf.keras.Input(shape=(224, 224, 3), name="input_tensor")
     
-    # Lambda preprocessing layer matching MobileNetV2
-    x = tf.keras.layers.Lambda(
-        tf.keras.applications.mobilenet_v2.preprocess_input,
+    # Built-in Rescaling layer matching MobileNetV2 [-1, 1] preprocessing
+    x = tf.keras.layers.Rescaling(
+        scale=1.0 / 127.5,
+        offset=-1.0,
         name="mobilenet_preprocess"
     )(inputs)
     
