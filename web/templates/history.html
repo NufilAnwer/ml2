@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Prediction history</h1>
+<p class="muted">Latest 200 requests recorded by the application database.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Time (UTC)</th><th>File</th><th>Decision</th><th>Confidence</th><th>AI probability</th><th>Model</th></tr></thead>
+<tbody>
+{% for row in rows %}
+<tr><td>{{ row.created_at }}</td><td>{{ row.filename }}</td><td>{{ row.label }}</td><td>{{ "%.1f"|format(row.confidence * 100) }}%</td><td>{{ "%.3f"|format(row.ai_probability) }}</td><td>{{ row.model_name }}</td></tr>
+{% else %}<tr><td colspan="6">No predictions have been recorded yet.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}
