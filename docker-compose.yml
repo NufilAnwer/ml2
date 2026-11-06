@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: visionguard
+      POSTGRES_USER: visionguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - visionguard_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U visionguard -d visionguard"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?Set FLASK_SECRET_KEY in .env}
+      DATABASE_URL: postgresql+psycopg://visionguard:${POSTGRES_PASSWORD}@db:5432/visionguard
+      MODEL_API_URL: ${MODEL_API_URL:?Set MODEL_API_URL in .env}
+      MODEL_API_KEY: ${MODEL_API_KEY:?Set MODEL_API_KEY in .env}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-8}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  visionguard_db:
