@@ -23,8 +23,11 @@ os.environ["PYTHONHASHSEED"] = "42"
 random.seed(42)
 np.random.seed(42)
 
-import tensorflow as tf
-tf.random.set_seed(42)
+try:
+    import tensorflow as tf
+    tf.random.set_seed(42)
+except Exception:
+    tf = None
 
 from pathlib import Path
 from sklearn.metrics import (
@@ -32,7 +35,10 @@ from sklearn.metrics import (
     roc_auc_score, confusion_matrix, roc_curve
 )
 import mlflow
-import mlflow.tensorflow
+try:
+    import mlflow.tensorflow
+except Exception:
+    pass
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -529,7 +535,7 @@ def main():
     args, _ = parser.parse_known_args()
 
     # Setup MLflow
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment("VisionGuard_23L-0532_A2_Ops")
 
