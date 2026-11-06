@@ -91,9 +91,7 @@ def visionguard_tuning(train_ds, val_ds, output_dir: str = "kt_visionguard"):
                     layer.trainable = True
 
         inputs = tf.keras.Input(shape=IMG_SIZE)
-        x = tf.keras.layers.Lambda(
-            tf.keras.applications.mobilenet_v2.preprocess_input
-        )(inputs)
+        x = tf.keras.layers.Rescaling(scale=1.0 / 127.5, offset=-1.0, name="preprocess")(inputs)
         x = base(x, training=False)
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
         x = tf.keras.layers.Dense(256, activation="relu")(x)
@@ -131,7 +129,7 @@ def visionguard_tuning(train_ds, val_ds, output_dir: str = "kt_visionguard"):
     # Log best to MLflow
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
     mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment("VisionGuard_23L-0501_A2_Ops")
+    mlflow.set_experiment("VisionGuard_23L-0532_A2_Ops")
     with mlflow.start_run(run_name="keras_tuner_best"):
         mlflow.log_params({
             "best_lr": best_hp.get("learning_rate"),
@@ -145,7 +143,25 @@ def visionguard_tuning(train_ds, val_ds, output_dir: str = "kt_visionguard"):
 
 
 if __name__ == "__main__":
-    print("Running TOY Keras Tuner (Fashion-MNIST)...")
-    toy_fashion_mnist_tuning()
-    print("\nToy tuning done. Run visionguard_tuning() after loading datasets.")
+    import argparse
+    parser = argparse.ArgumentParser(description="Keras Tuner for VisionGuard")
+    parser.add_argument("--mode", choices=["toy", "visionguard", "both"], default="toy", help="Tuning mode")
+    parser.add_argument("--trials", type=int, default=8, help="Number of trials")
+    args = parser.parse_args()
+
+    if args.mode in ["toy", "both"]:
+        print("Running TOY Keras Tuner (Fashion-MNIST)...")
+        toy_fashion_mnist_tuning()
+
+    if args.mode in ["visionguard", "both"]:
+        print("Running VisionGuard MobileNetV2 Tuning (8 Trials)...")
+        if os.path.exists("data/splits/train.txt") and os.path.exists("data/splits/val.txt"):
+            from scripts.train import load_split, build_pipeline
+            train_paths, train_labels = load_split("data/splits/train.txt")
+            val_paths, val_labels = load_split("data/splits/val.txt")
+            train_ds = build_pipeline(train_paths, train_labels, augment=False, batch_size=16)
+            val_ds = build_pipeline(val_paths, val_labels, augment=False, batch_size=16)
+            visionguard_tuning(train_ds, val_ds)
+        else:
+            print("Dataset splits not found in data/splits/. Run scripts/train.py first or specify splits.")
 

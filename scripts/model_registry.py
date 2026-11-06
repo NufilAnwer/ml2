@@ -22,7 +22,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 load_dotenv()
 
 TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
-MODEL_NAME = "VisionGuard_Champion_23L-0501"
+MODEL_NAME = "VisionGuard_Champion_23L-0532"
 IMG_SIZE = (224, 224)
 THRESHOLD = float(os.getenv("DECISION_THRESHOLD", "0.5"))
 

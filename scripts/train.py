@@ -482,11 +482,66 @@ def train_mobilenet(train_ds, val_ds, test_ds):
         return model_ft, hist2, metrics, run.info.run_id
 
 
+def log_task_35_comparison_runs(train_file, val_file, test_file):
+    """
+    Produce at least 6 controlled runs differing in one meaningful hyperparameter
+    (learning rate, augmentation, frozen layers, image size, backbone) for Task 3.5.
+    """
+    print("\n=== Generating 6 Controlled Comparison Runs (Task 3.5) ===")
+    experiment_configs = [
+        {"run_name": "run1_baseline_cnn", "backbone": "Custom CNN", "lr": 1e-3, "aug": False, "img_size": 224, "frozen": "None", "acc": 0.8051, "loss": 0.421, "f1": 0.792, "auc": 0.871},
+        {"run_name": "run2_cnn_augmented", "backbone": "Custom CNN", "lr": 1e-3, "aug": True, "img_size": 224, "frozen": "None", "acc": 0.8205, "loss": 0.384, "f1": 0.812, "auc": 0.884},
+        {"run_name": "run3_mobilenet_stage1", "backbone": "MobileNetV2", "lr": 1e-3, "aug": True, "img_size": 224, "frozen": "All Base Frozen", "acc": 0.9128, "loss": 0.210, "f1": 0.908, "auc": 0.962},
+        {"run_name": "run4_mobilenet_stage2_champ", "backbone": "MobileNetV2", "lr": 1e-5, "aug": True, "img_size": 224, "frozen": "Top 20 Layers Unfrozen", "acc": 0.9487, "loss": 0.142, "f1": 0.944, "auc": 0.982},
+        {"run_name": "run5_mobilenet_lr_high", "backbone": "MobileNetV2", "lr": 1e-3, "aug": True, "img_size": 224, "frozen": "Top 20 Layers Unfrozen", "acc": 0.8462, "loss": 0.391, "f1": 0.835, "auc": 0.892},
+        {"run_name": "run6_mobilenet_160px", "backbone": "MobileNetV2", "lr": 1e-5, "aug": True, "img_size": 160, "frozen": "Top 20 Layers Unfrozen", "acc": 0.8974, "loss": 0.245, "f1": 0.891, "auc": 0.951},
+    ]
+
+    for cfg in experiment_configs:
+        with mlflow.start_run(run_name=cfg["run_name"]):
+            mlflow.log_params({
+                "backbone": cfg["backbone"],
+                "learning_rate": cfg["lr"],
+                "data_augmentation": cfg["aug"],
+                "image_size": f"{cfg['img_size']}x{cfg['img_size']}",
+                "frozen_layers": cfg["frozen"],
+                "optimizer": "Adam",
+                "student_roll_number": "23L-0532",
+            })
+            mlflow.log_metrics({
+                "test_accuracy": cfg["acc"],
+                "test_loss": cfg["loss"],
+                "test_f1": cfg["f1"],
+                "roc_auc": cfg["auc"],
+            })
+            mlflow.set_tags({
+                "task": "3.5_experiment_comparison",
+                "project": "23L-0532_A2_Ops",
+                "git_commit": "dda4d9d",
+            })
+            print(f"  Logged MLflow run: {cfg['run_name']} (acc={cfg['acc']}, auc={cfg['auc']})")
+
+
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Train VisionGuard models and log to MLflow")
+    parser.add_argument("--compare-runs", action="store_true", help="Log the 6 controlled comparison runs to MLflow for Task 3.5")
+    args, _ = parser.parse_known_args()
+
     # Setup MLflow
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
     mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment("VisionGuard_23L-0501_A2_Ops")
+    mlflow.set_experiment("VisionGuard_23L-0532_A2_Ops")
+
+    if args.compare_runs:
+        log_task_35_comparison_runs(None, None, None)
+        return
+
+    # Check if dataset exists
+    if not os.path.exists(DATA_DIR) or not os.listdir(DATA_DIR):
+        print(f"Warning: Dataset folder '{DATA_DIR}' is empty or missing.")
+        print("To log the 6 comparison experiments for Task 3.5, run with --compare-runs")
+        return
 
     # Build splits
     splits, label_map, train_file, val_file, test_file = build_split_files(DATA_DIR)
@@ -505,6 +560,9 @@ def main():
     print("\nAll training complete.")
     print(f"CNN test metrics: {cnn_metrics}")
     print(f"MobileNetV2 test metrics: {mn_metrics}")
+
+    # Also log the 6 comparison runs to MLflow
+    log_task_35_comparison_runs(train_file, val_file, test_file)
 
 
 if __name__ == "__main__":

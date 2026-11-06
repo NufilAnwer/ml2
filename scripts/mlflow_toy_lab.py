@@ -30,7 +30,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
 mlflow.set_tracking_uri(MLFLOW_URI)
-mlflow.set_experiment("FashionMNIST_toy_23L-0501")
+mlflow.set_experiment("FashionMNIST_toy_23L-0532")
 
 
 def build_model(lr: float, units: int = 128) -> tf.keras.Model:
