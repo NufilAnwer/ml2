@@ -80,13 +80,14 @@ def main():
             callbacks.append(MLflowEpochLogger())
         history = model.fit(train_ds, validation_data=val_ds, epochs=cfg["training"]["epochs"], callbacks=callbacks)
         best_epoch = int(min(range(len(history.history["val_loss"])), key=lambda i: history.history["val_loss"][i]) + 1)
-        model.load_weights(str(checkpoint)) if checkpoint.exists() else None
+        model = tf.keras.models.load_model(checkpoint) if checkpoint.exists() else model
         test_metrics = model.evaluate(test_ds, return_dict=True, verbose=1)
         mlflow.log_metrics({f"test_{key}": float(value) for key, value in test_metrics.items()})
         mlflow.log_param("best_epoch", best_epoch)
         Path("models").mkdir(exist_ok=True)
         final_path = resolve_path(f"models/{args.model}_{args.stage}.keras")
         model.save(final_path)
+        mlflow.tensorflow.log_model(model, artifact_path="model_files")
         mlflow.log_artifact(str(final_path), artifact_path="model_files")
         mlflow.log_artifact(str(resolve_path("data/splits/train.csv")), artifact_path="split_lists")
         mlflow.log_artifact(str(resolve_path("data/splits/validation.csv")), artifact_path="split_lists")
