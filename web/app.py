@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy import text
 from web.database import db, Prediction
 
 load_dotenv()
@@ -71,7 +72,7 @@ def create_app():
     @app.get("/health")
     def health():
         try:
-            db.session.execute(db.text("SELECT 1"))
+            db.session.execute(text("SELECT 1"))
             return {"status": "ok", "database": "connected"}, 200
         except Exception:
             return {"status": "degraded", "database": "unavailable"}, 503
