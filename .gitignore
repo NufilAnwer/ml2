@@ -1,0 +1,37 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# DVC local cache and credentials
+.dvc/cache/
+.dvc/tmp/
+.dvc/config.local
+.dvc/config.user
+*.token
+credentials.json
+client_secrets.json
+token.json
+
+# Generated ML artifacts (track with DVC)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+models/*
+!models/.gitkeep
+*.h5
+
+# Reports / local outputs
+reports/*.pdf
+*.png
+metrics.json
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
