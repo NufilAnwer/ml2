@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">IMAGE AUTHENTICITY ANALYSIS</p>
+  <h1>Is it real, or AI-generated?</h1>
+  <p>Upload an image to receive a model prediction and confidence estimate.</p>
+  <form class="upload" action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/bmp" required>
+    <button type="submit">Analyze image</button>
+  </form>
+  <p class="muted">Supported: JPG, PNG, WEBP and BMP. Maximum size is configured by the server.</p>
+</section>
+{% endblock %}
