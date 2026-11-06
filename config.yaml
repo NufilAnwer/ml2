@@ -1,0 +1,25 @@
+project:
+  name: ROLL_NUMBER_A2_Ops
+  seed: 42
+data:
+  root: data/dataset
+  splits_dir: data/splits
+  image_size: [224, 224]
+  batch_size: 32
+  validation_fraction: 0.15
+  test_fraction: 0.15
+  extensions: [".jpg", ".jpeg", ".png", ".bmp", ".webp"]
+training:
+  epochs: 20
+  learning_rate: 0.001
+  fine_tune_learning_rate: 0.00001
+  dropout: 0.35
+  patience: 4
+  threshold: 0.50
+  unfreeze_last_layers: 20
+models:
+  cnn:
+    filters: [32, 64, 128]
+    dense_units: 128
+  mobilenet:
+    alpha: 1.0
