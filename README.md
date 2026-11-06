@@ -1,76 +1,72 @@
-# Fashion-MNIST ANN Pipeline
+# VisionGuard — AI-Generated vs Real Image Classifier
 
-Assignment 3 — End-to-End ML Versioning with Git, DVC and Google Drive.
+> Required project identifier: `<ROLL_NUMBER>_A2_Ops`. Replace the placeholder with your assigned roll number before submission.
 
-This repository implements a reproducible **fully connected TensorFlow ANN** for Fashion-MNIST. It is not a CNN. The pipeline is configured through `params.yaml` and orchestrated by DVC.
+VisionGuard predicts whether an uploaded image is **AI-generated** or **real**. The implementation covers dataset auditing/EDA, a custom CNN and MobileNetV2 transfer learning, MLflow tracking on DagsHub, a Flask upload/history UI, database logging, Docker Compose, CI, and a separately deployable inference API.
 
-## Pipeline
+## Structure
+- `src/data/`: image audit, split manifests, EDA and tf.data pipeline.
+- `src/models/`: custom CNN and MobileNetV2 builders.
+- `src/training/`: model training, evaluation, Keras Tuner and MLflow registry utilities.
+- `src/serving/`: one-time model loading and inference preprocessing.
+- `web/`: Flask UI, templates, CSS and database trail.
+- `api/`: authenticated FastAPI inference endpoint for cloud deployment.
+- `Dockerfile`, `Dockerfile.api`, `docker-compose.yml`: containers.
+- `.github/workflows/ci.yml`: CI checks and image build.
+- `reports/REPORT_TEMPLATE.md`: report structure.
 
-`prepare → preprocess → train → evaluate`
+## Dataset setup
+Download the Kaggle dataset [AI Generated Images vs Real Images](https://www.kaggle.com/datasets/cashbowman/ai-generated-images-vs-real-images). Extract the two class folders under `data/dataset/`. Class folder names must include `real` for real photos and `ai`, `fake` or `generated` for generated images. Raw data is ignored by Git and must be tracked with DVC.
 
-- **prepare:** downloads Fashion-MNIST using `tf.keras.datasets` and stores raw arrays.
-- **preprocess:** scales pixels to [0, 1], creates a reproducible validation split and saves processed arrays.
-- **train:** trains Flatten → Dense(ReLU) → Dropout → Dense(10, Softmax), using Adam and sparse categorical cross-entropy.
-- **evaluate:** reports test loss/accuracy, writes `metrics.json`, and saves a confusion-matrix image.
-
-## Quick start
-
-Python 3.9+ is required. TensorFlow support depends on your Python/OS combination; Python 3.10 or 3.11 is a practical choice.
+## Local setup
+Python 3.10/3.11 is recommended.
 
 ```bash
-python -m venv venv
-# Windows PowerShell:
-venv\Scripts\Activate.ps1
-# macOS/Linux:
-# source venv/bin/activate
-
+python -m venv .venv
+# Windows: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-python src/prepare.py
-python src/preprocess.py
-python src/train.py
-python src/evaluate.py
 ```
 
-The scripts run independently from the repository root. The full pipeline is run with `dvc repro`.
+Copy `.env.example` to `.env` and set the DagsHub MLflow URI and credentials. Do not commit `.env`, tokens, Kaggle credentials or cloud secrets.
 
-## Configuration
+## Run data and training steps
+```bash
+python -m src.data.audit --dataset data/dataset
+python -m src.data.eda --dataset data/dataset
+python -m src.data.split
+python -m src.training.train --model cnn
+python -m src.training.train --model mobilenet --stage head
+python -m src.training.train --model mobilenet --stage fine_tune
+python -m src.training.tune --max-trials 8
+```
 
-Edit `params.yaml` to change the validation split, random seed, ANN width, dropout, learning rate, epochs, or batch size. Scripts read their settings from this file; values are not duplicated in source code.
+For manual callback logging use the default `--logging manual`; compare with `--logging autolog`. The toy MLflow lab is `python -m src.training.mlflow_toy --learning-rate 0.001`; run it again with a different learning rate. Set `MLFLOW_TRACKING_URI` and DagsHub credentials in environment variables to send runs to DagsHub, or leave the URI blank for local MLflow.
 
-## DVC and Google Drive
+Choose the best model using validation results, copy its file to `models/champion.keras`, and set `MODEL_FAMILY=cnn` or `mobilenet`. Then run `python -m src.training.evaluate` for the held-out test report. Threshold selection is based on validation data, not the test set.
 
-1. Initialize DVC on the `dev` branch after the initial Git commit: `dvc init`.
-2. Create a folder in your own Google Drive and copy its folder ID.
-3. Configure the remote (replace the placeholder):
-   `dvc remote add -d gdrive_storage gdrive://YOUR_GOOGLE_DRIVE_FOLDER_ID`
-4. Install the Drive extra: `pip install "dvc[gdrive]"`.
-5. Run `dvc repro`, then `dvc push`. Complete the Google OAuth flow in your browser.
-6. Share the Drive folder with your instructor and verify that artifacts appear there.
+## DVC
+Initialize DVC in the Git repository, configure a DagsHub or local remote, add the dataset folder, and push it. See `docs/DVC_SETUP.md` for a safe command sequence. DVC credentials and local config must not be committed.
 
-**Important DVC design note:** DVC pipeline stage outputs are already versioned by DVC. Do not leave standalone `data/raw.dvc`, `data/processed.dvc`, or `models.dvc` files in place while the same paths are declared as `outs` in `dvc.yaml`; DVC will report overlapping output ownership. If you first demonstrate Part C with `dvc add`, record the commands/screenshots, then use `dvc remove data/raw.dvc data/processed.dvc models.dvc` before switching to the pipeline-managed outputs in Part D. The pipeline's generated `dvc.lock` records the final stage state.
+## Flask and database
+The Compose stack runs Flask plus PostgreSQL. PostgreSQL is not published to the host; Flask reaches it by service name.
 
-Never commit Google OAuth tokens, client secrets, or private credentials. The remote folder ID is configuration, not a credential, but keep personal Drive details out of public repositories where possible.
+```bash
+# Add POSTGRES_PASSWORD to .env and configure MODEL_API_URL/API_KEY
+docker compose up --build
+```
 
-## Git assignment evidence
+Open `http://localhost:5000`. Flask sends image bytes to the separate inference API and stores each successful prediction in PostgreSQL.
 
-The assignment requires genuine local demonstrations and screenshots for advanced Git commands, stash, rebase, reset, `git mv`, and `git rm`. A GitHub commit made through an API is not a substitute for running those commands locally. Follow the supplied assignment brief and capture your own terminal output.
+## Cloud inference API
+Build `Dockerfile.api` and deploy it to a cloud container service. Provide the champion model artifact and configure `MODEL_PATH`, `MODEL_FAMILY`, `MODEL_THRESHOLD`, and `API_KEY` as cloud environment variables. The API exposes `GET /health` and authenticated `POST /predict`. Set the resulting public URL in Flask's `MODEL_API_URL`. A live URL is not claimed until a real deployment is completed and tested externally.
 
-## Expected generated artifacts
+## Tests
+```bash
+pip install -r requirements-web.txt pytest
+pytest -q
+```
 
-- `data/raw/` — Fashion-MNIST arrays
-- `data/processed/` — normalized train/validation/test arrays
-- `models/model.h5` and `models/history.csv`
-- `confusion_matrix.png`
-- `metrics.json`
-- `dvc.lock` — generated by `dvc repro`
-
-These outputs are generated locally and should be DVC-managed rather than committed as large Git files.
-
-## Target
-
-The assignment target is at least **85% test accuracy**. The project does not claim that target has been reached until you run the pipeline and inspect `metrics.json`.
-
-## Repository workflow
-
-Use `main` for the initial project setup and `dev` for feature work. Keep the incremental commits required by the assignment; do not squash them before submission.
+## Submission evidence
+The assignment requires genuine screenshots of environment/GPU versions, audit/EDA, DVC toy and dataset operations, model summaries/curves/evaluation/error analysis, Keras Tuner trials, local and DagsHub MLflow runs/registry, Flask upload/history/validation/health, Docker operations and image sizes, CI red/green runs, cloud deployment, Postman tests, and Flask-to-API integration. These must be captured from your own actual runs; the repository does not invent results or deployment URLs.
