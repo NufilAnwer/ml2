@@ -43,7 +43,6 @@ def main():
     input_shape = (*size, 3)
     train_ds = make_dataset("train", training=True, model_name=args.model)
     val_ds = make_dataset("validation", model_name=args.model)
-    test_ds = make_dataset("test", model_name=args.model)
     learning_rate = cfg["training"]["learning_rate"]
     if args.model == "mobilenet" and args.stage == "fine_tune":
         learning_rate = cfg["training"]["fine_tune_learning_rate"]
@@ -81,8 +80,8 @@ def main():
         history = model.fit(train_ds, validation_data=val_ds, epochs=cfg["training"]["epochs"], callbacks=callbacks)
         best_epoch = int(min(range(len(history.history["val_loss"])), key=lambda i: history.history["val_loss"][i]) + 1)
         model = tf.keras.models.load_model(checkpoint) if checkpoint.exists() else model
-        test_metrics = model.evaluate(test_ds, return_dict=True, verbose=1)
-        mlflow.log_metrics({f"test_{key}": float(value) for key, value in test_metrics.items()})
+        validation_metrics = model.evaluate(val_ds, return_dict=True, verbose=1)
+        mlflow.log_metrics({f"final_validation_{key}": float(value) for key, value in validation_metrics.items()})
         mlflow.log_param("best_epoch", best_epoch)
         Path("models").mkdir(exist_ok=True)
         final_path = resolve_path(f"models/{args.model}_{args.stage}.keras")
@@ -96,7 +95,7 @@ def main():
         mlflow.log_metric("best_epoch", best_epoch)
         print("Run ID:", run.info.run_id)
         print("Best epoch:", best_epoch)
-        print("Test metrics:", test_metrics)
+        print("Final validation metrics:", validation_metrics)
         print("Saved:", final_path)
 
 if __name__ == "__main__":
