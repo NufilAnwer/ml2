@@ -49,6 +49,11 @@ Thumbs.db
 # Docker
 *.log
 
+# Scratch & extracted references
+extracted_ref_images/
+report_assets_v2/
+temp_*
+
 # Database
 *.db
 *.sqlite

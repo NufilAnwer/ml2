@@ -227,25 +227,34 @@ def history():
 
 @app.route("/health")
 def health():
-    """Health check endpoint for Docker Compose and load balancers."""
+    """Health check endpoint for Docker Compose, cloud monitors, and evaluation."""
     db_ok = False
     model_ok = os.path.exists(MODEL_VERSION)
+    record_count = 0
     try:
         _, SessionLocal, _, PredictionLog = _get_db()
         db = SessionLocal()
-        db.query(PredictionLog).count()
+        record_count = db.query(PredictionLog).count()
         db.close()
         db_ok = True
     except Exception as e:
         logger.warning(f"Health check DB error: {e}")
 
     status = "healthy" if (db_ok and model_ok) else "degraded"
+    threshold_val = float(os.getenv("DECISION_THRESHOLD", "0.279"))
     return jsonify({
         "status": status,
-        "database": "ok" if db_ok else "error",
-        "model": "ok" if model_ok else "not_found",
-        "model_path": MODEL_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "database_connected": db_ok,
+        "database_records_logged": record_count,
+        "decision_threshold": threshold_val,
+        "environment": "production",
+        "max_upload_size_mb": 5,
+        "model_loaded": model_ok,
+        "model_version": "v2-champion-mobilenetv2",
+        "project": "VisionGuard A2 Ops",
+        "service": "VisionGuard",
+        "student_roll_number": "23L-0532"
     }), 200 if status == "healthy" else 503
 
 
