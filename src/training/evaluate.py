@@ -1,5 +1,8 @@
 """One-shot test evaluation, ROC/CM plots and ten misclassified examples."""
 from pathlib import Path
+import os
+import mlflow
+from dotenv import load_dotenv
 import json
 import numpy as np
 import pandas as pd
@@ -12,6 +15,10 @@ from src.data.common import load_config, resolve_path
 from src.data.pipeline import make_dataset
 
 def main():
+    load_dotenv()
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "")
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
     cfg = load_config()
     model_path = resolve_path("models/champion.keras")
     if not model_path.exists():
@@ -54,6 +61,14 @@ def main():
     for ax in list(axes.flat)[len(wrong):]:
         ax.axis("off")
     plt.tight_layout(); plt.savefig(out / "misclassified_10.png", dpi=160); plt.close()
+    selected_run = os.getenv("MLFLOW_SELECTED_RUN_ID", "")
+    mlflow.set_experiment("VisionGuard")
+    with mlflow.start_run(run_id=selected_run) if selected_run else mlflow.start_run(run_name="final_test_evaluation"):
+        mlflow.log_metrics({f"test_{key}": value for key, value in metrics.items()})
+        mlflow.log_artifact(str(out / "confusion_matrix.png"), artifact_path="evaluation")
+        mlflow.log_artifact(str(out / "roc_curve.png"), artifact_path="evaluation")
+        mlflow.log_artifact(str(out / "misclassified_10.png"), artifact_path="evaluation")
+        mlflow.log_artifact(str(resolve_path("metrics.json")), artifact_path="evaluation")
     print(json.dumps(metrics, indent=2))
     print("Figures:", out)
 
